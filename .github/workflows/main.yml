@@ -1,0 +1,60 @@
+import time
+import schedule
+import requests
+
+# 假設玩家輸入的資料，包含地圖、結束時間、重生球資訊
+game_data = {
+    "地圖": "黑暗森林",
+    "結束時間": "2025-01-07 16:00",  # 預定的結束時間
+    "綠球重生時間": "約每 40 分鐘",
+    "藍球重生時間": "每 10 分鐘",
+    "紫球重生時間": "每 15 分鐘",
+    "金球重生時間": "每 20 分鐘"
+}
+
+# Discord Webhook URL（請替換為您創建的 URL）
+WEBHOOK_URL = 'https://discord.com/api/webhooks/xxxxxxxxx/xxxxxxxxxxxxxxxxxx'
+
+# 發送訊息到 Discord
+def send_message_to_discord(message):
+    data = {
+        "content": message
+    }
+    response = requests.post(WEBHOOK_URL, json=data)
+    if response.status_code != 204:
+        print(f"Error sending message to Discord: {response.status_code}")
+    else:
+        print("Message sent to Discord successfully.")
+
+# 顯示地圖與結束時間
+def show_game_info():
+    message = f"玩家目前地圖: {game_data['地圖']}\n"
+    message += f"預定結束時間: {game_data['結束時間']}"
+    send_message_to_discord(message)
+
+# 記錄重生球的資訊
+def record_rebirth_times():
+    message = f"綠球重生時間: {game_data['綠球重生時間']}\n"
+    message += f"藍球重生時間: {game_data['藍球重生時間']}\n"
+    message += f"紫球重生時間: {game_data['紫球重生時間']}\n"
+    message += f"金球重生時間: {game_data['金球重生時間']}"
+    send_message_to_discord(message)
+
+# 推算下一次重生球重生時間，若球未按時出現
+def calculate_rebirth_respawn():
+    current_time = time.localtime()  # 取得當前時間
+    message = f"重生球未按時出現，正在推算下一次重生時間...\n"
+    message += f"當前時間: {time.strftime('%Y-%m-%d %H:%M:%S', current_time)}\n"
+    next_respawn_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 3600))  # 假設重生時間推算1小時
+    message += f"下一次重生球重生時間預計為: {next_respawn_time}"
+    send_message_to_discord(message)
+
+# 設定定時任務
+schedule.every().day.at("12:00").do(show_game_info)
+schedule.every().day.at("12:05").do(record_rebirth_times)
+schedule.every().day.at("12:10").do(calculate_rebirth_respawn)
+
+# 讓程式持續運行並執行已設定的任務
+while True:
+    schedule.run_pending()
+    time.sleep(1)
